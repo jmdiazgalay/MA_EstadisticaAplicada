@@ -1,0 +1,641 @@
+############################################################################################################
+####  CODIGO FUENTE : MAESTRIA EN ESTADISTICA APLICADA
+####  DESEMPLEO JUVENIL EN RD EN 2018
+####  ACTUALIZADO : 05/11/2022
+####  AUTOR : JOSE DIAZ 
+############################################################################################################
+
+
+rm(list = ls(all.names = TRUE))
+
+# Loading libraries
+library("readxl")
+
+setwd("D:/tesisUASD/")
+# Reading in the data
+my_data <- read_excel("Personas_ENH18.xlsx", sheet = "Personas_ENH18")
+
+# Selecting Variables
+
+variables <- c("ID", "Region", "HPROVI", "HESTRAT", "HZONA", "HMIEMBRO", "NHOGAR", 
+                "H202", "H203", "jefeHogar", "bilingue", "bi_EN", "bi_Fr", "H210", "H301", "H302",	
+                 "H304", "H307", "comp_esc_port", "H406", "H407", "unemp", "grupsec")
+
+data_1 <- my_data[variables]
+
+# names(data_1) <-  c("id", "region", "provincia", "estrato", "zona", "miembrosHogar",
+#		 "hogaresVivienda", "sexo", "edad", "jefeHogar", 
+#			"bilingue", "bi_EN", "bi_Fr",
+#		     "estadoCivil", "leerEscribir", "asistEducacion",	
+#                 "nivelEducativo", "educTecProf", "comp_esc_port", "celular", 
+#			"usaInternet", "noBuscaTrabajo", "unemp", "exp", "catExp", "grupsec")
+
+
+names(data_1) <-  c("id", "region", "provincia", "estrato", "zona", "miembrosHogar",
+                    "hogaresVivienda", "sexo", "edad", "jefeHogar", 
+                    "bilingue", "bi_EN", "bi_Fr",
+                    "estadoCivil", "leerEscribir", "asistEducacion",	
+                    "nivelEducativo", "educTecProf", "comp_esc_port", "celular", 
+                    "usaInternet", "unemp", "grupsec")
+
+# Subsetting by age
+
+data_2 <- data_1[ which(data_1$edad > 14 & data_1$edad < 25), ]
+
+
+# Coding variables
+
+data_2$region <- factor(data_2$region,
+			levels = c(1:10),
+			labels = c("Cibao Norte", "Cibao Sur", "Cibao Nordeste", "Cibao Noroeste",
+					"Valdesia", "Enriquillo", "El Valle", "Del Yuma", 
+						"Higuamo","Metropolinata"))
+data_2$provincia <- factor(data_2$provincia,
+			levels = c(1:32),
+			labels = c("Distrito Nacional", "Azua", "Bahoruco", "Barahona", "Dajabon", "Duarte",
+				"Elias Piña", "El Seibo", "Espaillat", "Independencia", "La Altagracia", "La Romana",
+				"La Vega", "Maria Trinidad Sanchez", "Monte Cristi", "Pedernales", "Peravia", "Puerto Plata", "Hermanas Mirabal",
+				"Samaná", "San Cristobal", "San Juan", "San Pedro de Macorís", "Sánchez Ramírez","Santiago", "Santiago Rodríguez", "Valverde",
+				"Monseñor Nouel", "Monte Plata", "Hato Mayor", "San José de Ocoa", "Santo Domingo"))
+
+data_2$estrato <- factor(data_2$estrato,
+			levels = c(1:4),
+			labels = c("Ciudad de Santo Domingo", "Grandes Ciudades", "Resto Urbano", "Rural"))
+
+data_2$zona <- factor(data_2$zona,
+			levels = c(1,2),
+			labels = c("urbano", "Rural"))
+
+data_2$sexo <- factor(data_2$sexo,
+			levels = c(1,2),
+			labels = c("varon", "hembra"))
+
+data_2$jefeHogar[data_2$jefeHogar == 'co-jefe'] <- 'no'
+data_2$jefeHogar <- as.factor(data_2$jefeHogar)
+
+data_2$bilingue <- as.factor(data_2$bilingue)
+data_2$bi_EN <- as.factor(data_2$bi_EN)
+data_2$bi_Fr <- as.factor(data_2$bi_Fr)
+
+data_2$estadoCivil <- factor(data_2$estadoCivil,
+			levels = c(1:7,9),
+			labels = c("casado", "unido", "viudo", "divorciado", "separado", "separado", "soltero", "noInfo"))
+
+data_2$leerEscribir <- factor(data_2$leerEscribir,
+			levels = c(1,2,3,9),
+			labels = c("lee y escribe", "ni lee ni escribe", "no sabe si sabe", "noInfo"))
+
+data_2$asistEducacion <- factor(data_2$asistEducacion,
+			levels = c(1,2,3,9),
+			labels = c("si asiste", "no asiste pero asistio", "nunca asistio", "noInfo"))
+
+data_2$nivelEducativo <- ordered(data_2$nivelEducativo,
+			levels = c(1:5,8,9),
+			labels = c("Preescolar o inicial", "Primario o básico", "Secundario o Medio", "Universitario",
+					"Postgrado, Maestría o Doctorado", "no sabe", "noInfo"))
+
+data_2$educTecProf <- factor(data_2$educTecProf,
+			levels = c(1,2,9),
+			labels = c("si", "no", "noInfo"))
+
+data_2$comp_esc_port <- as.factor(data_2$comp_esc_port)
+
+data_2$celular <- factor(data_2$celular,
+			levels = c(1,2,9),
+			labels = c("si", "no", "noInfo"))
+
+data_2$usaInternet <- factor(data_2$usaInternet,
+			levels = c(1,2,9),
+			labels = c("si", "no", "noInfo"))
+
+#data_2$noBuscaTrabajo <- factor(data_2$noBuscaTrabajo,
+#			levels = c(1:13, 99),
+#			labels = c("Ha buscado trabajo y no encuentra", "Familiar y otras personas le están buscando",
+#					"Solicitó y espera respuesta", "Está incapacitado permanentemente", "Está incapacitado temporalmente",
+#					"Está estudiando", "Se dedica a quehaceres del hogar", "Es rentista", "No tiene suficiente educación o experiencia",
+#					"Cree que no iba a encontrar", "Por razones de edad", "No quiso buscar trabajo", "Es pensionado o jubilado", "Sin información"))
+
+data_2$unemp  <- factor(data_2$unemp,
+			levels = c("yes", "no"),
+			labels = c("1", "0"))
+
+data_2$unemp <- as.numeric(levels(data_2$unemp ))[data_2$unemp ]
+
+#data_2$exp  <- factor(data_2$exp,
+#			levels = c(1,2,9),
+#			labels = c("si", "no", "noInfo"))
+
+# data_2$catExp  <- factor(data_2$catExp,
+#			levels = c(1:8,96,99),
+#			labels = c("Empleado u obrero del gobierno central o municipal",
+#					"Empleado u obrero de empresa pública", "Empleado u obrero de empresas privadas",
+#					"Empleador o patrón", "Trabajados(a) para un familiar o no familiar sin paga o ganancia",
+#					"Profesional que trabaja por cuenta propia", "No profesional que trabaja por cuenta propia",
+#					"Trabajador(a) doméstico(a)", "Otro", "Sin información"))
+
+data_2$grupsec <- ordered(data_2$grupsec,
+			levels = c(1:5),
+			labels = c("Alto", "Medio y Medio alto",  "Medio bajo",  "Bajo", "Muy bajo"))
+
+
+#data_2$grupsec <- factor(data_2$grupsec,
+#                          levels = c(1:5),
+#                          labels = c("Alto", "Medio y Medio alto",  "Medio bajo",  "Bajo", "Muy bajo"))
+
+# Define reference level 
+
+data_2 <- within(data_2, zona <- relevel(zona, ref = "urbano"))
+data_2 <- within(data_2, region <- relevel(region, ref = "Metropolinata "))
+
+
+# Identify NA & noInfo cases statistics
+colSums(is.na(data_2))
+summary(data_2)
+
+# Subset data to keep full cases only
+
+data_3 <- as.data.frame(data_2[complete.cases(data_2), ])
+
+library(dplyr)
+data_4 <- data_3 %>% filter_all(any_vars(. %in% c("noInfo")))
+
+data_5  <- data_3[!(data_3$id %in% data_4$id), ]
+
+
+# Apply AIC for variables selection
+
+full.model <- glm(unemp ~ ., data = data_5[2:23], family = "binomial")
+
+library(MASS)
+step.model <- stepAIC(full.model, direction = "both", 
+                      trace = T)
+summary(step.model)
+
+# Test and training datasets
+
+## 90% of the sample size
+smp_size <- floor(0.90 * nrow(data_5))
+
+## set the seed to make your partition reproducible
+set.seed(123)
+train_ind <- sample(seq_len(nrow(data_5)), size = smp_size)
+
+train <- data_5[train_ind, ]
+test <- data_5[-train_ind, ]
+
+
+# Fitting the logit model to the training data
+
+data_5 <- within(data_5, region <- relevel(region, ref = "Metropolinata"))
+unemp.model <- glm(unemp ~ region + sexo + edad + jefeHogar + bilingue + leerEscribir + 
+                     asistEducacion + educTecProf + comp_esc_port + usaInternet + 
+                     grupsec + zona, data =data_5[2:23], family = "binomial")
+summary(unemp.model)
+
+library(caret)
+# Use your model to make predictions, in this example newdata = training set, but replace with your test set    
+
+p <- predict(unemp.model, data_5, type = "response")
+
+# If p exceeds threshold of 0.5, 1 else 0
+hd_or_nohd <- ifelse(p > 0.35, 1, 0)
+
+preds <- hd_or_nohd 
+actuals <- test$unemp
+
+library(pROC)
+auc(preds, actuals)  # 0.875
+
+# Convert to factor: p_class
+p_class <- factor(hd_or_nohd, levels = levels(as.factor(test[["unemp"]])))
+
+
+# Create confusion matrix
+confusionMatrix(p_class, as.factor(test[["unemp"]]))
+
+library(mltools)
+roc_pred <- auc_roc(pred = p, labels = test$unemp)
+roc_perf <- performance(roc_pred , "tpr" , "fpr")
+plot(roc_perf,
+     colorize = TRUE,
+     print.cutoffs.at= seq(0,1,0.05),
+     text.adj=c(-0.2,1.7), ylab="Taza de verdadero positivo", 
+     xlab="Taza de falso positivo")
+
+
+### Build a regression tree
+
+library(rparts)
+train_cust_dtree <- rpart(unemp ~ region + sexo + edad + jefeHogar + bilingue + leerEscribir + 
+                            asistEducacion + educTecProf + comp_esc_port + usaInternet + 
+                            grupsec + zona, data=train[2:23], method = "class")
+rpart.plot(train_cust_dtree, cex=0.3)
+
+
+
+
+
+unemp.model <- glm(unemp ~ region + sexo + edad + jefeHogar + bilingue + leerEscribir + 
+                     asistEducacion + educTecProf + comp_esc_port + usaInternet + 
+                     grupsec + zona, data = train[2:23], family = "binomial")
+
+
+### MFA Analysis
+
+pcaData <- data_5[2:23]
+
+pcaData$score <- as.numeric(p)
+
+rownames(pcaData) <- make.unique(data_5$id)
+
+  #pcaData$status_empleado <- as.factor(ifelse(pcaData$unemp == 1,
+  #                      c("no"), c("si")))
+  #pcaData$status_desempleado <- as.factor(ifelse(pcaData$unemp == 0,
+  #                                c("no"), c("si")))
+
+  pcData_unemployed <- pcaData[which(pcaData$unemp == 1),]
+  pcData_employed <- pcaData[which(pcaData$unemp == 0),]
+
+library(FactoMineR)
+
+res.mfa <- MFA(pcaData, 
+               group = c(4, 2, 1, 1, 1, 3, 1, 4, 3, 1, 1), 
+               type = c("n", "s", "n", "s", "n", "n", "n", "n", "n", "s", "n"),
+               name.group = c("zona_residencia","condicionHogar", "sexo", "edad", "jefeHogar", "idiomas",
+                                "estado_civil", "formación", "TICs", "desempleo", "grupo_socioeconómico"),
+               graph = FALSE)
+
+
+print(res.mfa)
+
+
+library("factoextra")
+eig.val <- get_eigenvalue(res.mfa)
+head(eig.val)
+
+group <- get_mfa_var(res.mfa, "group")
+group
+
+# Coordinates of groups
+(group$coord)
+# Cos2: quality of representation on the factore map
+(group$cos2)
+# Contributions to the  dimensions
+(group$contrib)
+
+fviz_mfa_var(res.mfa, "group",  col.var = "blue")
+
+fviz_contrib(res.mfa, "group", axes = 1)
+# Contribution to the second dimension
+fviz_contrib(res.mfa, "group", axes = 2)
+# Contribution to the third dimension
+fviz_contrib(res.mfa, "group", axes = 3)
+# Contribution to the fourth dimension
+fviz_contrib(res.mfa, "group", axes = 4)
+
+
+quanti.var <- get_mfa_var(res.mfa, "quanti.var")
+quanti.var 
+
+# Coordinates
+(quanti.var$coord)
+# Cos2: quality on the factore map
+(quanti.var$cos2)
+# Contributions to the dimensions
+(quanti.var$contrib)
+
+
+fviz_mfa_var(res.mfa, "quanti.var", col.var = "contrib", 
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"), 
+             col.var.sup = "violet", repel = TRUE,
+             geom = c("point", "text"))
+
+
+p <- predict(unemp.model, pcData_unemployed, type = "response")
+a <- as.numeric(p)
+
+fviz_mfa_ind(res.mfa, col.ind = a, 
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             repel = F, geom = "point")
+
+
+
+
+
+### Plotting the regression tree.
+  # R base version may be needed
+
+library(rparts)
+train_cust_dtree <- rpart(unemp ~ sexo + edad + jefeHogar + bilingue + leerEscribir + 
+                            asistEducacion + educTecProf + comp_esc_port + usaInternet + 
+                            grupsec + zona, data=train[2:23], method = "class", 
+                            control =rpart.control(minsplit =1,minbucket=1, cp=0))
+
+
+prune.rpart(train_cust_dtree, cp=0.00038)
+
+rpart.plot(prune.rpart(train_cust_dtree, cp=0.00028), type = 0, 
+              clip.right.labs = T, branch = .4, under = F, tweak = 0.99)
+
+
+
+
+
+
+
+set.seed(1680) # for reproducibility
+
+library(dplyr) # for data cleaning
+library(ISLR) # for college dataset
+library(cluster) # for gower similarity and pam
+library(Rtsne) # for t-SNE plot
+library(ggplot2) # for visualization
+
+pcData_unemployed_1 <- pcData_employed
+pcData_unemployed_1$id <- rownames(pcData_unemployed_1)
+
+gower_dist <- daisy(pcData_unemployed_1[, 1:22],
+                    metric = "gower",
+                    type = list(logratio = 3))
+
+# Check attributes to ensure the correct methods are being used
+# (I = interval, N = nominal)
+# Note that despite logratio being called, 
+# the type remains coded as "I"
+
+summary(gower_dist)
+
+
+
+# Calculate silhouette width for many k using PAM
+
+sil_width <- c(NA)
+
+for(i in 2:10){
+  
+  pam_fit <- pam(gower_dist,
+                 diss = TRUE,
+                 k = i)
+  
+  sil_width[i] <- pam_fit$silinfo$avg.width
+  
+}
+
+# Plot sihouette width (higher is better)
+
+plot(1:10, sil_width,
+     xlab = "Number of clusters",
+     ylab = "Silhouette Width")
+lines(1:10, sil_width)
+
+
+
+pam_fit <- pam(gower_dist, diss = TRUE, k = 3)
+
+pam_results <- pcData_unemployed_1 %>%
+  dplyr::select(-id) %>%
+  mutate(cluster = pam_fit$clustering) %>%
+  group_by(cluster) %>%
+  do(the_summary = summary(.))
+
+pam_results$the_summary
+
+
+tsne_obj <- Rtsne(gower_dist, is_distance = TRUE)
+
+tsne_data <- tsne_obj$Y %>%
+  data.frame() %>%
+  setNames(c("X", "Y")) %>%
+  mutate(cluster = factor(pam_fit$clustering),
+         name = "not appplicable")
+
+ggplot(aes(x = X, y = Y), data = tsne_data) +
+  geom_point(aes(color = cluster))
+
+
+
+
+
+
+
+
+
+
+
+pcData_employed_1 <- sample_n(pcData_employed, 4000)
+pcData_employed_1$id <- rownames(pcData_employed_1)
+
+gower_dist <- daisy(pcData_employed_1[, 1:22],
+                    metric = "gower",
+                    type = list(logratio = 3))
+
+# Check attributes to ensure the correct methods are being used
+# (I = interval, N = nominal)
+# Note that despite logratio being called, 
+# the type remains coded as "I"
+
+summary(gower_dist)
+
+
+
+# Calculate silhouette width for many k using PAM
+
+sil_width <- c(NA)
+
+for(i in 2:10){
+  
+  pam_fit <- pam(gower_dist,
+                 diss = TRUE,
+                 k = i)
+  
+  sil_width[i] <- pam_fit$silinfo$avg.width
+  
+}
+
+# Plot sihouette width (higher is better)
+
+plot(1:10, sil_width,
+     xlab = "Number of clusters",
+     ylab = "Silhouette Width")
+lines(1:10, sil_width)
+
+
+
+pam_fit <- pam(gower_dist, diss = TRUE, k = 4)
+
+pam_results <- pcData_employed_1 %>%
+  dplyr::select(-id) %>%
+  mutate(cluster = pam_fit$clustering) %>%
+  group_by(cluster) %>%
+  do(the_summary = summary(.))
+
+pam_results$the_summary
+
+
+tsne_obj <- Rtsne(gower_dist, is_distance = TRUE)
+
+tsne_data <- tsne_obj$Y %>%
+  data.frame() %>%
+  setNames(c("X", "Y")) %>%
+  mutate(cluster = factor(pam_fit$clustering),
+         name = "not appplicable")
+
+ggplot(aes(x = X, y = Y), data = tsne_data) +
+  geom_point(aes(color = cluster))
+
+
+
+
+
+library(ggpubr)
+library(factoextra)
+
+
+res.km <- kmeans(data_5[2:23], 3, nstart = 25)
+# K-means clusters showing the group of each individuals
+res.km$cluster
+
+
+
+cluster.results <-kmodes(data_5[2:23], 3, iter.max = 10, weighted = FALSE ) 
+
+
+
+
+plot(data_5[2:23], col = cluster.results$cluster)
+points(cluster.result$modes, col = 1:5, pch = 8)
+
+
+
+
+
+### Creating a dendogram
+
+dd <- dist(train[2:23], method = "euclidean")
+
+library(cluster)  # we'll use these packages
+library(fpc)
+
+g.dist = daisy(train[2,5, 8, 9, 10, 11], metric="gower")
+
+
+library(cluster)
+df<- train[2:23]
+# calculate distance
+d_dist<-daisy(df, metric="euclidean")
+# hierarchical clustering
+hc<-hclust(d_dist, method = "complete")
+# dendrogram 
+plot(hc, labels=FALSE)
+rect.hclust(hc, k=8, border="red")
+# choose k, number of clusters 
+cluster<-cutree(hc, k=8)
+# add cluster to original data 
+df<-cbind(df,as.factor(cluster))
+
+
+
+pdata <- predict(unemp.model, newdata = test, type = "response")
+
+# use caret and compute a confusion matrix
+
+
+glmModel <- train(unemp ~ region + sexo + edad + jefeHogar + bilingue + leerEscribir + 
+                    asistEducacion + educTecProf + comp_esc_port + usaInternet + 
+                    grupsec + zona, data = train[2:23],method="glm", family = "binomial")
+
+confusionMatrix(data = as.factor(pdata>0.5), reference = as.factor(test$unemp))
+
+
+trainPredicted <- predict(glmModel,test)
+# generate confusion matrix for hold back data
+confusionMatrix(trainPredicted,reference=test$unemp)
+
+
+
+pdata <- predict(logitMod, newdata = train, type = "response")
+
+# use caret and compute a confusion matrix
+
+
+
+rf_class <- predict(unemp.model, newdata = test, type = "raw") 
+predictions <- cbind(data.frame(train_preds=rf_class, 
+                                test$unemp))
+# Create a confusion matrix object
+cm <- caret::confusionMatrix(predictions$train_preds, predictions$test.Species)
+print(cm) 
+
+
+
+
+
+
+####################
+## Getting the data:
+
+sample = data.frame(matrix(floor(abs(rnorm(20000)*100)),ncol=200))
+groupCodes <- c(rep("Cont",25), rep("Tre1",25), rep("Tre2",25), rep("Tre3",25))
+rownames(sample) <- make.unique(groupCodes)
+
+colorCodes <- c(Cont="red", Tre1="green", Tre2="blue", Tre3="yellow")
+
+distSamples <- dist(sample)
+hc <- hclust(distSamples)
+dend <- as.dendrogram(hc)
+
+####################
+## installing dendextend for the first time:
+
+install.packages('dendextend')
+
+####################
+## Solving the question:
+
+# loading the package
+library(dendextend)
+# Assigning the labels of dendrogram object with new colors:
+labels_colors(dend) <- colorCodes[groupCodes][order.dendrogram(dend)]
+# Plotting the new dendrogram
+plot(dend)
+
+
+####################
+## A sub tree - so we can see better what we got:
+par(cex = 1)
+plot(dend[[1]], horiz = TRUE)
+
+
+
+pred_class <- predict(unemp.model, test)
+
+test$unemp <- ordered(test$unemp,
+                          levels = c(1:2),
+                          labels = c("0","1"))
+
+confusionMatrix(
+  data = relevel(pred_class, ref = "1"), 
+  reference = relevel(test$unemp, ref = "1"")
+)
+
+
+confusionMatrix(data = as.numeric(pdata>0.5), reference = train$LoanStatus_B)
+
+probabilities <- unemp.model %>% predict(test, type = "response")
+head(probabilities)
+
+
+
+
+predicted.classes <- ifelse(probabilities > 0.5, 1, 0)
+mean(predicted.classes == test$unemp)
+write.csv(data_5)
+
+
+summary(lm(unemp~sexo+zona+bilingue+bi_EN+jefeHogar, data_2[2:26]))
+
+
+
+library("writexl")
+write_xlsx(test, "test.xlsx")
+
